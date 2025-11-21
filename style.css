@@ -1,0 +1,58 @@
+:root{
+	--bg1:#060611;
+	--bg2:#0f1220;
+	--accent:#7bf1f3;
+	--card:#0d1117;
+	--glass: rgba(255,255,255,0.03);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body {
+	margin: 0;
+	font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	background: linear-gradient(180deg,var(--bg1),var(--bg2));
+	color: #e6f7fb;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	padding:32px;
+}
+
+.app{
+	width:100%;
+	max-width:760px;
+	background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+	border-radius:12px;
+	padding:22px;
+	box-shadow: 0 8px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+.header{ text-align:center; margin-bottom:12px }
+.header h1{ margin:0; font-size:28px; letter-spacing:1px }
+.tag{ margin:4px 0 0; color: rgba(183,241,243,0.85); font-size:13px }
+
+.game{ padding:12px }
+.status{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px }
+.balance{ font-weight:700 }
+.controls{ display:flex; align-items:center; gap:8px }
+.controls input[type=number]{ width:84px; padding:6px 8px; border-radius:8px; border:none; background:var(--glass); color:inherit }
+.controls label{ font-size:14px }
+.controls button{ padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:transparent; color:var(--accent); border:1px solid rgba(123,241,243,0.12) }
+.controls button.primary{ background:linear-gradient(90deg,var(--accent),#5ee6ff); color:#022; font-weight:700; border:none }
+
+.reels{ display:flex; gap:12px; justify-content:center; margin:18px 0 }
+.reel{ width:110px; height:110px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; font-size:44px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03) }
+
+.message{ text-align:center; padding:10px; color: #bfeff2; min-height:28px }
+
+.footer{ text-align:center; opacity:0.6; margin-top:6px; font-size:13px }
+
+/* spinning visual hint */
+.spinning{ filter: blur(0.6px) brightness(1.05); transform: scale(1.02); transition: transform 260ms }
+
+@media (max-width:520px){
+	.reel{ width:76px; height:76px; font-size:30px }
+	.controls input[type=number]{ width:64px }
+}
+

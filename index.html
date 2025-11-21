@@ -1,14 +1,45 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="styles.css">
-    
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MidNight — Mini Slot Game</title>
+    <link rel="stylesheet" href="style.css">
+  
 </head>
 <body>
-    
-</body>
-</html>  
+    <main class="app">
+        <header class="header">
+            <h1>MidNight Slots</h1>
+            <p class="tag">A tiny slot-style gambling game (demo)</p>
+        </header>
 
-<button>hi</button>
+        <section class="game">
+            <div class="status">
+                <div class="balance">Balance: $<span id="balance">0</span></div>
+                <div class="controls">
+                    <label for="bet">Bet: $</label>
+                    <input id="bet" type="number" min="1" value="10">
+                    <button id="maxBet">Max</button>
+                    <button id="spinBtn" class="primary">Spin</button>
+                    <button id="resetBtn">Reset</button>
+                </div>
+            </div>
+
+            <div class="reels" aria-live="polite">
+                <div class="reel" id="reel0">—</div>
+                <div class="reel" id="reel1">—</div>
+                <div class="reel" id="reel2">—</div>
+            </div>
+
+            <div class="message" id="message">Place your bet and spin!</div>
+        </section>
+
+        <footer class="footer">
+            <small>Built with HTML, CSS, and JS · Demo only</small>
+        </footer>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
