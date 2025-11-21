@@ -61,6 +61,12 @@ function randomSymbol(){
 	return SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
 }
 
+function setSymbol(reelEl, sym){
+	// update visible text and the data-symbol used by the pseudo-element for trail blur
+	reelEl.dataset.symbol = sym;
+	reelEl.textContent = sym;
+}
+
 function evaluateResult(final){
 	const counts = {};
 	final.forEach(s => counts[s] = (counts[s]||0)+1);
@@ -116,13 +122,13 @@ function spin(){
 		function step(){
 			if(i >= steps){
 				final[reelIndex] = randomSymbol();
-				reels[reelIndex].textContent = final[reelIndex];
+				setSymbol(reels[reelIndex], final[reelIndex]);
 				reels[reelIndex].classList.add('pop');
 				setTimeout(()=> reels[reelIndex].classList.remove('pop'), 260);
 				playTone(880 - reelIndex*120, 0.04, 0.04);
 				return Promise.resolve();
 			}
-			reels[reelIndex].textContent = randomSymbol();
+			setSymbol(reels[reelIndex], randomSymbol());
 			i++;
 			// slowly increase interval (decelerate)
 			interval = Math.min(finalDelay, interval * 1.18);
@@ -183,8 +189,9 @@ betInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ spin(); } });
 
 // init
 function init(){
-	reels.forEach(r => r.textContent = randomSymbol());
+	reels.forEach(r => setSymbol(r, randomSymbol()));
 	updateUI();
 }
 init();
+
 

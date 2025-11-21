@@ -42,7 +42,7 @@ body {
 .controls button.primary{ background:linear-gradient(90deg,var(--accent),#5ee6ff); color:#022; font-weight:700; border:none }
 
 .reels{ display:flex; gap:12px; justify-content:center; margin:18px 0 }
-.reel{ width:110px; height:110px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; font-size:44px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03) }
+.reel{ width:110px; height:110px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; font-size:44px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03); position:relative; overflow:hidden }
 
 .message{ text-align:center; padding:10px; color: #bfeff2; min-height:28px }
 
@@ -58,9 +58,35 @@ body {
 
 /* V2: improved spin blur and pop */
 .reel.spinning{
-	filter: blur(6px) brightness(0.9);
 	transform: scale(1.01);
-	transition: filter 220ms ease, transform 220ms ease;
+	transition: transform 220ms ease;
+}
+
+/* motion trail simulated with a pseudo-element that follows the symbol and blurs */
+.reel::after{
+	content: attr(data-symbol);
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%,-50%);
+	font-size: inherit;
+	pointer-events: none;
+	opacity: 0;
+	color: rgba(255,255,255,0.85);
+	mix-blend-mode: screen;
+}
+
+.reel.spinning::after{
+	opacity: 0.9;
+	animation: reel-trail 360ms linear infinite;
+	filter: blur(8px) saturate(1.1) contrast(1.02);
+}
+
+@keyframes reel-trail{
+	0%{ transform: translate(-50%,-120%); opacity:0.9 }
+	40%{ transform: translate(-50%,-10%); opacity:0.6 }
+	70%{ transform: translate(-50%,18%); opacity:0.25 }
+	100%{ transform: translate(-50%,80%); opacity:0 }
 }
 
 .reel.pop{ animation: pop .26s ease; }
