@@ -1,4 +1,4 @@
-// Mini slot game logic
+// Mini slot game logic (v2)
 const SYMBOLS = ['🍒','🍋','🍊','🔔','⭐','7️⃣'];
 const STORAGE_KEY = 'midnight_balance_v1';
 const START_BALANCE = 1000;
@@ -15,6 +15,23 @@ const spinBtn = $('spinBtn');
 const maxBtn = $('maxBet');
 const resetBtn = $('resetBtn');
 const messageEl = $('message');
+
+// lightweight WebAudio tone for feedback
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function playTone(freq=880, duration=0.08, gain=0.06){
+	try{
+		ensureAudio();
+		const o = audioCtx.createOscillator();
+		const g = audioCtx.createGain();
+		o.type = 'sine';
+		o.frequency.value = freq;
+		g.gain.value = gain;
+		o.connect(g); g.connect(audioCtx.destination);
+		o.start();
+		o.stop(audioCtx.currentTime + duration);
+	}catch(e){ /* audio may be blocked */ }
+}
 
 function loadBalance(){
 	const raw = localStorage.getItem(STORAGE_KEY);
@@ -35,8 +52,9 @@ function updateUI(){
 	betInput.max = String(Math.max(1, balance));
 }
 
-function showMessage(txt){
+function showMessage(txt, kind){
 	messageEl.textContent = txt;
+	messageEl.classList.toggle('win', kind === 'win');
 }
 
 function randomSymbol(){
@@ -44,99 +62,107 @@ function randomSymbol(){
 }
 
 function evaluateResult(final){
-	// final: array of 3 symbols
 	const counts = {};
 	final.forEach(s => counts[s] = (counts[s]||0)+1);
 	const occurrences = Object.values(counts).sort((a,b)=>b-a);
-	// three of a kind
 	if(occurrences[0] === 3){
 		const sym = final[0];
-		const multiplier = (sym === '7️⃣') ? 15 : 5; // 7 is special
+		const multiplier = (sym === '7️⃣') ? 15 : 5;
 		return {type:'big-win', multiplier };
 	}
-	// two of a kind
 	if(occurrences[0] === 2){
 		return {type:'small-win', multiplier:2};
 	}
 	return {type:'lose', multiplier:0};
 }
 
-function animateReelsDuringSpin(intervalHandles){
-	// add spinning class for slight visual
-	reels.forEach(r => r.classList.add('spinning'));
-	// clear after spin is done by caller
+function setReelsSpinning(on = true){
+	reels.forEach(r => r.classList.toggle('spinning', on));
 }
 
-function stopReelVisuals(){
-	reels.forEach(r => r.classList.remove('spinning'));
+function flashBalance(){
+	balanceEl.classList.add('win');
+	setTimeout(()=> balanceEl.classList.remove('win'), 900);
 }
 
 function spin(){
 	if(spinning) return;
-	let bet = Number(betInput.value) || 0;
-	bet = Math.floor(bet);
+	let bet = Math.floor(Number(betInput.value) || 0);
 	if(bet <= 0){ showMessage('Enter a bet greater than $0'); return; }
 	if(bet > balance){ showMessage('Not enough balance for that bet'); return; }
 
-	// start
 	spinning = true;
 	spinBtn.disabled = true;
 	maxBtn.disabled = true;
 	resetBtn.disabled = true;
 	betInput.disabled = true;
 
-	// take the bet up front
+	// take bet
 	balance -= bet;
 	updateUI();
 
 	showMessage('Spinning...');
+	playTone(880, 0.06, 0.05);
+	setReelsSpinning(true);
 
-	// set intervals to quickly cycle symbols for each reel
-	const handles = [];
-	const frameMs = 60;
-	reels.forEach((r, idx) => {
-		handles[idx] = setInterval(() => {
-			r.textContent = randomSymbol();
-		}, frameMs);
-	});
-	animateReelsDuringSpin(handles);
-
-	// decide durations so reels stop staggered
-	const durations = [900, 1400, 1850];
+	// For a smoother feel, each reel cycles faster then decelerates.
 	const final = [null,null,null];
-	durations.forEach((dur, i) => {
-		setTimeout(() => {
-			clearInterval(handles[i]);
-			final[i] = randomSymbol();
-			reels[i].textContent = final[i];
-			// small pop effect
-			reels[i].classList.add('pop');
-			setTimeout(()=> reels[i].classList.remove('pop'), 260);
+	const cycleHandles = [];
 
-			// when last reel stops, evaluate
-			if(i === durations.length-1){
-				const result = evaluateResult(final);
-				let payout = 0;
-				if(result.type === 'big-win' || result.type === 'small-win'){
-					payout = bet * result.multiplier;
-					balance += payout;
-					saveBalance();
-					showMessage((result.type==='big-win' ? 'Big Win! ' : 'Win! ') + `You won $${payout}`);
-				} else {
-					saveBalance();
-					showMessage('No win — better luck next spin');
-				}
-
-				// finish
-				spinning = false;
-				stopReelVisuals();
-				spinBtn.disabled = false;
-				maxBtn.disabled = false;
-				resetBtn.disabled = false;
-				betInput.disabled = false;
-				updateUI();
+	// helper: create a decelerating loop using recursive timeouts
+	function startCycle(reelIndex, steps, initialInterval, finalDelay){
+		let i = 0;
+		let interval = initialInterval;
+		function step(){
+			if(i >= steps){
+				final[reelIndex] = randomSymbol();
+				reels[reelIndex].textContent = final[reelIndex];
+				reels[reelIndex].classList.add('pop');
+				setTimeout(()=> reels[reelIndex].classList.remove('pop'), 260);
+				playTone(880 - reelIndex*120, 0.04, 0.04);
+				return Promise.resolve();
 			}
-		}, dur);
+			reels[reelIndex].textContent = randomSymbol();
+			i++;
+			// slowly increase interval (decelerate)
+			interval = Math.min(finalDelay, interval * 1.18);
+			return new Promise(res => setTimeout(()=> res(step()), interval));
+		}
+		return step();
+	}
+
+	// Kick off cycles with different lengths to stagger stops
+	Promise.all([
+		startCycle(0, 12, 40, 220),
+		startCycle(1, 18, 40, 300),
+		startCycle(2, 24, 40, 360)
+	]).then(() => {
+		setReelsSpinning(false);
+		const result = evaluateResult(final);
+		let payout = 0;
+		if(result.type === 'big-win' || result.type === 'small-win'){
+			payout = bet * result.multiplier;
+			balance += payout;
+			saveBalance();
+			playTone(1200, 0.12, 0.12);
+			if(result.type === 'big-win'){
+				// celebratory sequence
+				playTone(1000, 0.06, 0.12);
+				setTimeout(()=> playTone(1400, 0.08, 0.12), 120);
+			}
+			showMessage(`${result.type==='big-win'?'Big Win!':'Win!'} You won $${payout}`, 'win');
+			flashBalance();
+		} else {
+			saveBalance();
+			showMessage('No win — better luck next spin');
+		}
+
+		spinning = false;
+		spinBtn.disabled = false;
+		maxBtn.disabled = false;
+		resetBtn.disabled = false;
+		betInput.disabled = false;
+		updateUI();
 	});
 }
 
@@ -152,11 +178,13 @@ resetBtn.addEventListener('click', ()=>{
 	}
 });
 
-// initialize reels with random symbols
+// Enter to spin when focus in bet input
+betInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ spin(); } });
+
+// init
 function init(){
 	reels.forEach(r => r.textContent = randomSymbol());
 	updateUI();
 }
-
 init();
 

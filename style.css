@@ -56,3 +56,29 @@ body {
 	.controls input[type=number]{ width:64px }
 }
 
+/* V2: improved spin blur and pop */
+.reel.spinning{
+	filter: blur(6px) brightness(0.9);
+	transform: scale(1.01);
+	transition: filter 220ms ease, transform 220ms ease;
+}
+
+.reel.pop{ animation: pop .26s ease; }
+@keyframes pop{
+	0%{ transform: translateY(0) scale(1) }
+	40%{ transform: translateY(-6px) scale(1.06) }
+	100%{ transform: translateY(0) scale(1) }
+}
+
+.balance.win{ animation: glow 900ms ease; }
+@keyframes glow{
+	0%{ box-shadow: none; color: inherit }
+	40%{ box-shadow: 0 6px 24px rgba(123,241,243,0.25); color: #a6fff7 }
+	100%{ box-shadow: none; color: inherit }
+}
+
+.controls button:active{ transform: translateY(1px) }
+
+.message.win{ color:#b8ffd5; font-weight:700 }
+
+
